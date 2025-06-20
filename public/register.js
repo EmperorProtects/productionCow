@@ -48,6 +48,7 @@ registerForm.addEventListener('submit', async (e) => {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include',
       body: JSON.stringify({
         name,
         email,
@@ -61,8 +62,6 @@ registerForm.addEventListener('submit', async (e) => {
 
     if (response.ok && data.success) {
       // Store token and user info
-      localStorage.setItem('vetToken', data.token);
-      localStorage.setItem('vetInfo', JSON.stringify(data.vet));
 
       // Show success message
       showSuccess(`Account created successfully! Welcome, ${data.vet.name}. Redirecting...`);

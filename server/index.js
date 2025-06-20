@@ -274,19 +274,12 @@ app.post('/api/auth/register', async (req, res) => {
       JWT_SECRET,
       { expiresIn: '24h' }
     );
-
-    res.status(201).json({
-      success: true,
-      message: 'Vet registered successfully',
-      token,
-      vet: {
-        id: vet._id,
-        email: vet.email,
-        name: vet.name,
-        region: vet.region,
-        licenseNumber: vet.licenseNumber
-      }
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000,
     });
+    res.json({ success: true });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ success: false, message: 'Registration failed' });
