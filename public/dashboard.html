@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vet Dashboard - Cow Inspection Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            font-weight: 300;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .welcome-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .welcome-card h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .region-badge {
+            display: inline-block;
+            background: #4CAF50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .search-section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .search-section h3 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 15px;
+            align-items: end;
+        }
+
+        .search-group {
+            flex: 1;
+        }
+
+        .search-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .search-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .search-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+
+        .search-btn:hover {
+            background: #45a049;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .action-card .icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .action-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .action-card p {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        .alert.success {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border-left: 4px solid #2e7d32;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>🐄 Cow Inspection Dashboard</h1>
+            <div class="user-info">
+                <div>
+                    <div id="vetName">Loading...</div>
+                    <div><span class="region-badge" id="vetRegion">Loading...</span></div>
+                </div>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="welcome-card">
+            <h2>Welcome back, <span id="welcomeName">Doctor</span>!</h2>
+            <p>You can access cow information for the <strong id="welcomeRegion">your</strong> region.</p>
+        </div>
+
+        <div id="alertContainer"></div>
+
+        <div class="search-section">
+            <h3>🔍 Search Cow by ID</h3>
+            <form class="search-form" id="searchForm">
+                <div class="search-group">
+                    <label for="cowId">Cow ID</label>
+                    <input type="text" id="cowId" name="cowId" placeholder="Enter cow ID (e.g., COW001)" required>
+                </div>
+                <button type="submit" class="search-btn">Search Cow</button>
+            </form>
+        </div>
+
+        <div class="quick-actions">
+            <div class="action-card" onclick="openNewTab('/cow/COW001')">
+                <div class="icon">🔍</div>
+                <h4>View Cow Info (HTML)</h4>
+                <p>Access cow information in a formatted view</p>
+            </div>
+
+            <div class="action-card" onclick="testApiAccess()">
+                <div class="icon">📊</div>
+                <h4>API Access Test</h4>
+                <p>Test API access with your credentials</p>
+            </div>
+
+            <div class="action-card" onclick="addNewCow()">
+                <div class="icon">➕</div>
+                <h4>Add New Cow</h4>
+                <p>Register a new cow in your region</p>
+            </div>
+
+            <div class="action-card" onclick="viewProfile()">
+                <div class="icon">👤</div>
+                <h4>View Profile</h4>
+                <p>Check your vet profile information</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = window.location.origin;
+        let vetInfo = null;
+        let token = null;
+
+        // Initialize dashboard
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Check authentication
+            token = localStorage.getItem('vetToken');
+            if (!token) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Load vet info
+            try {
+                const storedVetInfo = localStorage.getItem('vetInfo');
+                if (storedVetInfo) {
+                    vetInfo = JSON.parse(storedVetInfo);
+                    updateUI();
+                }
+
+                // Verify token with server
+                await verifyToken();
+            } catch (error) {
+                console.error('Error loading vet info:', error);
+                logout();
+            }
+        });
+
+        async function verifyToken() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    vetInfo = data.vet;
+                    localStorage.setItem('vetInfo', JSON.stringify(vetInfo));
+                    updateUI();
+                } else {
+                    throw new Error('Token verification failed');
+                }
+            } catch (error) {
+                console.error('Token verification error:', error);
+                logout();
+            }
+        }
+
+        function updateUI() {
+            if (!vetInfo) return;
+
+            document.getElementById('vetName').textContent = vetInfo.name;
+            document.getElementById('vetRegion').textContent = vetInfo.region;
+            document.getElementById('welcomeName').textContent = vetInfo.name;
+            document.getElementById('welcomeRegion').textContent = vetInfo.region;
+        }
+
+        // Handle cow search
+        document.getElementById('searchForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const cowId = document.getElementById('cowId').value.trim();
+            if (cowId) {
+                openNewTab(`/cow/${cowId}`);
+            }
+        });
+
+        function openNewTab(url) {
+            // For cow HTML view, we need to handle authentication differently
+            // For now, we'll show an alert about manual token inclusion
+            if (url.startsWith('/cow/')) {
+                showAlert('Note: The HTML cow view requires authentication. You may need to implement session-based auth for seamless access.', 'error');
+                setTimeout(() => {
+                    window.open(url, '_blank');
+                }, 2000);
+            } else {
+                window.open(url, '_blank');
+            }
+        }
+
+        async function testApiAccess() {
+            const cowId = prompt('Enter a cow ID to test API access:');
+            if (!cowId) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/cow/${cowId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ Success! Found cow: ${data.cow.name} (${data.cow.cowId}) in ${data.cow.region} region`, 'success');
+                } else {
+                    showAlert(`❌ ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        function addNewCow() {
+            const cowData = {
+                cowId: prompt('Cow ID:'),
+                name: prompt('Cow Name:'),
+                breed: prompt('Breed:'),
+                age: parseInt(prompt('Age:')),
+                weight: parseInt(prompt('Weight (kg):'))
+            };
+
+            if (!cowData.cowId || !cowData.name || !cowData.breed || !cowData.age || !cowData.weight) {
+                showAlert('All fields are required', 'error');
+                return;
+            }
+
+            fetch(`${API_BASE_URL}/api/cow`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(cowData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert(`✅ Cow ${data.cow.name} added successfully!`, 'success');
+                } else {
+                    showAlert(`❌ ${data.message}`, 'error');
+                }
+            })
+            .catch(error => {
+                showAlert(`❌ Error: ${error.message}`, 'error');
+            });
+        }
+
+        function viewProfile() {
+            alert(`Vet Profile:
+Name: ${vetInfo.name}
+Email: ${vetInfo.email}
+Region: ${vetInfo.region}
+License: ${vetInfo.licenseNumber}`);
+        }
+
+        function logout() {
+            localStorage.removeItem('vetToken');
+            localStorage.removeItem('vetInfo');
+            window.location.href = 'login.html';
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert ${type}`;
+            alertDiv.textContent = message;
+            
+            alertContainer.innerHTML = '';
+            alertContainer.appendChild(alertDiv);
+            alertDiv.style.display = 'block';
+
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

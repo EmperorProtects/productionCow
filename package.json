@@ -1,0 +1,26 @@
+{
+  "name": "cow-inspection-service",
+  "version": "1.0.0",
+  "description": "A comprehensive web service for cow inspection and NFC chip management",
+  "main": "index.js",
+  "scripts": {
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm run dev",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && cd server && npm install && cd ../client && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "cow",
+    "inspection",
+    "nfc",
+    "veterinary",
+    "mern"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "concurrently": "^8.2.2",
+    "mongoose": "^8.15.1"
+  }
+}

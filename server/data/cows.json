@@ -1,0 +1,74 @@
+[
+  {
+    "cowId": "COW001",
+    "name": "Bessie",
+    "breed": "Holstein",
+    "age": 4,
+    "weight": 650,
+    "region": "North",
+    "healthStatus": "healthy",
+    "lastInspection": "2024-06-01T00:00:00.000Z",
+    "vaccinations": [
+      {
+        "name": "Foot and Mouth Disease",
+        "date": "2024-01-15T00:00:00.000Z",
+        "nextDue": "2025-01-15T00:00:00.000Z"
+      },
+      {
+        "name": "Bovine Respiratory Disease",
+        "date": "2024-03-10T00:00:00.000Z",
+        "nextDue": "2025-03-10T00:00:00.000Z"
+      }
+    ],
+    "medicalHistory": [
+      {
+        "date": "2024-02-01T00:00:00.000Z",
+        "diagnosis": "Minor cut on leg",
+        "treatment": "Cleaned and bandaged wound",
+        "veterinarian": "Dr. Smith"
+      }
+    ]
+  },
+  {
+    "cowId": "COW002",
+    "name": "Daisy",
+    "breed": "Jersey",
+    "age": 3,
+    "weight": 450,
+    "region": "South",
+    "healthStatus": "under_treatment",
+    "lastInspection": "2024-05-20T00:00:00.000Z",
+    "vaccinations": [
+      {
+        "name": "Brucellosis",
+        "date": "2024-01-20T00:00:00.000Z",
+        "nextDue": "2025-01-20T00:00:00.000Z"
+      }
+    ],
+    "medicalHistory": [
+      {
+        "date": "2024-05-15T00:00:00.000Z",
+        "diagnosis": "Mild respiratory infection",
+        "treatment": "Antibiotics prescribed",
+        "veterinarian": "Dr. Johnson"
+      }
+    ]
+  },
+  {
+    "cowId": "COW003",
+    "name": "Moo-bert",
+    "breed": "Angus",
+    "age": 5,
+    "weight": 720,
+    "region": "East Farm",
+    "healthStatus": "healthy",
+    "lastInspection": "2024-06-01T00:00:00.000Z",
+    "vaccinations": [
+      {
+        "name": "Clostridial Disease",
+        "date": "2024-04-01T00:00:00.000Z",
+        "nextDue": "2025-04-01T00:00:00.000Z"
+      }
+    ]
+  }
+]

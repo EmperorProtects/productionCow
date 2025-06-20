@@ -1,0 +1,42 @@
+{
+  "name": "cow-inspection-server",
+  "version": "1.0.0",
+  "description": "Backend server for cow inspection service",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "simple": "node index-simple.js",
+    "dev": "nodemon index.js",
+    "dev-simple": "nodemon index-simple.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "compression": "^1.7.4",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "csp": "^0.0.1-alpha1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-csp-header": "^6.1.0",
+    "helmet": "^7.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.17.0",
+    "mongoose": "^7.5.0",
+    "morgan": "^1.10.0",
+    "node-cache": "^5.1.2",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "cow",
+    "inspection",
+    "api",
+    "express",
+    "mongodb"
+  ],
+  "author": "",
+  "license": "MIT"
+}
