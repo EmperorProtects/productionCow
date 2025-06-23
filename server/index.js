@@ -736,6 +736,231 @@ app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
+// Dashboard Metrics Endpoints
+
+// Get dashboard statistics
+app.get('/api/dashboard/stats', authenticateVet, async (req, res) => {
+  try {
+    const vetRegion = req.vet.region;
+    
+    // Get total cows in vet's region
+    const totalCows = await Cow.countDocuments({ region: vetRegion });
+    
+    // Get cows by health status
+    const healthyCount = await Cow.countDocuments({ 
+      region: vetRegion, 
+      healthStatus: 'healthy' 
+    });
+    const sickCount = await Cow.countDocuments({ 
+      region: vetRegion, 
+      healthStatus: 'sick' 
+    });
+    const underTreatmentCount = await Cow.countDocuments({ 
+      region: vetRegion, 
+      healthStatus: 'under_treatment' 
+    });
+    
+    // Get breed distribution
+    const breedStats = await Cow.aggregate([
+      { $match: { region: vetRegion } },
+      { $group: { _id: '$breed', count: { $sum: 1 } } },
+      { $sort: { count: -1 } }
+    ]);
+    
+    // Get age distribution
+    const ageStats = await Cow.aggregate([
+      { $match: { region: vetRegion } },
+      {
+        $group: {
+          _id: {
+            $switch: {
+              branches: [
+                { case: { $lt: ['$age', 2] }, then: '0-2 years' },
+                { case: { $lt: ['$age', 5] }, then: '2-5 years' },
+                { case: { $lt: ['$age', 8] }, then: '5-8 years' },
+                { case: { $gte: ['$age', 8] }, then: '8+ years' }
+              ],
+              default: 'Unknown'
+            }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id': 1 } }
+    ]);
+    
+    // Get recent inspections (last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const recentInspections = await Cow.countDocuments({
+      region: vetRegion,
+      lastInspection: { $gte: thirtyDaysAgo }
+    });
+    
+    // Get overdue inspections (more than 90 days)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    const overdueInspections = await Cow.countDocuments({
+      region: vetRegion,
+      lastInspection: { $lt: ninetyDaysAgo }
+    });
+    
+    // Get average weight by breed
+    const weightStats = await Cow.aggregate([
+      { $match: { region: vetRegion } },
+      {
+        $group: {
+          _id: '$breed',
+          avgWeight: { $avg: '$weight' },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { avgWeight: -1 } }
+    ]);
+    
+    // Get vaccination status
+    const vaccinationStats = await Cow.aggregate([
+      { $match: { region: vetRegion } },
+      {
+        $project: {
+          hasVaccinations: { $gt: [{ $size: { $ifNull: ['$vaccinations', []] } }, 0] }
+        }
+      },
+      {
+        $group: {
+          _id: '$hasVaccinations',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    const vaccinatedCount = vaccinationStats.find(stat => stat._id === true)?.count || 0;
+    const unvaccinatedCount = vaccinationStats.find(stat => stat._id === false)?.count || 0;
+    
+    res.json({
+      success: true,
+      stats: {
+        totalCows,
+        healthStats: {
+          healthy: healthyCount,
+          sick: sickCount,
+          underTreatment: underTreatmentCount
+        },
+        breedStats,
+        ageStats,
+        inspectionStats: {
+          recent: recentInspections,
+          overdue: overdueInspections
+        },
+        weightStats,
+        vaccinationStats: {
+          vaccinated: vaccinatedCount,
+          unvaccinated: unvaccinatedCount
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch dashboard statistics' });
+  }
+});
+
+// Get timeline data for charts
+app.get('/api/dashboard/timeline', authenticateVet, async (req, res) => {
+  try {
+    const vetRegion = req.vet.region;
+    const days = parseInt(req.query.days) || 30;
+    
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    
+    // Get daily inspection counts
+    const inspectionTimeline = await Cow.aggregate([
+      {
+        $match: {
+          region: vetRegion,
+          lastInspection: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$lastInspection'
+            }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { '_id': 1 } }
+    ]);
+    
+    // Get health status changes over time (if we had a history)
+    // For now, we'll simulate with current data
+    const healthTimeline = await Cow.aggregate([
+      { $match: { region: vetRegion } },
+      {
+        $group: {
+          _id: '$healthStatus',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+    
+    res.json({
+      success: true,
+      timeline: {
+        inspections: inspectionTimeline,
+        healthStatus: healthTimeline
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching timeline data:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch timeline data' });
+  }
+});
+
+// Get list of cows with basic info for the dashboard
+app.get('/api/dashboard/cows', authenticateVet, async (req, res) => {
+  try {
+    const vetRegion = req.vet.region;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    const cows = await Cow.find({ region: vetRegion })
+      .select('cowId name breed age weight healthStatus lastInspection')
+      .sort({ lastInspection: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const total = await Cow.countDocuments({ region: vetRegion });
+    
+    res.json({
+      success: true,
+      cows,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching cows list:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch cows list' });
+  }
+});
+
+// Logout endpoint
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('token');
+  res.json({ success: true, message: 'Logged out successfully' });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`🐄 Cow Inspection Server running on port ${PORT}`);
