@@ -7,21 +7,46 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 require('dotenv').config();
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
 // Middleware
-app.use(helmet());
+// app.use(helmet({
+//   contentSecurityPolicy: {
+//     directives: {
+//       defaultSrc: ["'self'"],
+//       scriptSrc: ["'self'", "'unsafe-eval'"],
+//       styleSrc: ["'self'", "'unsafe-inline'"],
+//       imgSrc: ["'self'", "data:", "https:"],
+//       connectSrc: ["'self'"],
+//       fontSrc: ["'self'"],
+//       objectSrc: ["'none'"],
+//       mediaSrc: ["'self'"],
+//       frameSrc: ["'none'"],
+//     },
+//   },
+// }));
 app.use(cookieParser());
 app.use(compression());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from public directory
-app.use(express.static('../public'));
+// Serve static files from public directory with proper MIME types
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.js')) {
+      res.setHeader('Content-Type', 'application/javascript');
+    } else if (path.endsWith('.css')) {
+      res.setHeader('Content-Type', 'text/css');
+    } else if (path.endsWith('.html')) {
+      res.setHeader('Content-Type', 'text/html');
+    }
+  }
+}));
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/cow_inspection_db';
 
@@ -474,10 +499,95 @@ function generateCowHTML(cow) {
             color: #666;
             font-size: 0.9em;
             margin-bottom: 5px;
-        }
-        @media (max-width: 600px) {
+        }        @media (max-width: 600px) {
             .info-grid {
                 grid-template-columns: 1fr;
+            }
+        }
+
+        /* Vaccination Form Styles */
+        .vaccination-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            margin-top: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        @media (max-width: 600px) {
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
             }
         }
     </style>
@@ -529,9 +639,7 @@ function generateCowHTML(cow) {
                     `).join('')}
                 </div>
             </div>
-            ` : ''}
-
-            ${cow.medicalHistory && cow.medicalHistory.length > 0 ? `
+            ` : ''}            ${cow.medicalHistory && cow.medicalHistory.length > 0 ? `
             <div class="section">
                 <h2>Medical History</h2>
                 <div class="timeline">
@@ -546,99 +654,129 @@ function generateCowHTML(cow) {
                 </div>
             </div>
             ` : ''}
+
+            <!-- Add New Vaccination Section -->
+            <div class="section">
+                <h2>Add New Vaccination</h2>
+                <form id="vaccinationForm" class="vaccination-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="vaccinationName">Vaccination Name:</label>
+                            <select id="vaccinationName" required>
+                                <option value="">Select vaccination type</option>
+                                <option value="Foot and Mouth Disease">Foot and Mouth Disease</option>
+                                <option value="Bovine Respiratory Disease">Bovine Respiratory Disease</option>
+                                <option value="Brucellosis">Brucellosis</option>
+                                <option value="Anthrax">Anthrax</option>
+                                <option value="Clostridial Disease">Clostridial Disease</option>
+                                <option value="Infectious Bovine Keratoconjunctivitis">Infectious Bovine Keratoconjunctivitis</option>
+                                <option value="Bovine Viral Diarrhea">Bovine Viral Diarrhea</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customVaccinationGroup" style="display: none;">
+                            <label for="customVaccinationName">Custom Vaccination Name:</label>
+                            <input type="text" id="customVaccinationName" placeholder="Enter vaccination name">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="vaccinationDate">Vaccination Date:</label>
+                            <input type="date" id="vaccinationDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="nextDueDate">Next Due Date (optional):</label>
+                            <input type="date" id="nextDueDate">
+                        </div>
+                    </div>
+                    <button type="submit" class="submit-btn">Add Vaccination</button>
+                    <div id="vaccineMessage" class="message" style="display: none;"></div>
+                </form>
+            </div>
         </div>
     </div>
+
+    <script>
+        // Set default date to today
+        document.getElementById('vaccinationDate').value = new Date().toISOString().split('T')[0];
+
+        // Handle custom vaccination name
+        document.getElementById('vaccinationName').addEventListener('change', function(e) {
+            const customGroup = document.getElementById('customVaccinationGroup');
+            if (e.target.value === 'Other') {
+                customGroup.style.display = 'block';
+                document.getElementById('customVaccinationName').required = true;
+            } else {
+                customGroup.style.display = 'none';
+                document.getElementById('customVaccinationName').required = false;
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('vaccinationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const vaccinationName = document.getElementById('vaccinationName').value;
+            const customVaccinationName = document.getElementById('customVaccinationName').value;
+            const vaccinationDate = document.getElementById('vaccinationDate').value;
+            const nextDueDate = document.getElementById('nextDueDate').value;
+            const messageDiv = document.getElementById('vaccineMessage');
+
+            const name = vaccinationName === 'Other' ? customVaccinationName : vaccinationName;
+
+            if (!name || !vaccinationDate) {
+                showMessage('Please fill in all required fields', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/cow/${cow.cowId}/vaccination', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        date: vaccinationDate,
+                        nextDue: nextDueDate || null
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Vaccination added successfully! Refreshing page...', 'success');
+                    // Reset form
+                    document.getElementById('vaccinationForm').reset();
+                    document.getElementById('customVaccinationGroup').style.display = 'none';
+                    // Refresh page to show new vaccination
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showMessage('Error: ' + data.message, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to add vaccination: ' + error.message, 'error');
+            }
+        });
+
+        function showMessage(message, type) {
+            const messageDiv = document.getElementById('vaccineMessage');
+            messageDiv.textContent = message;
+            messageDiv.className = 'message ' + type;
+            messageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                messageDiv.style.display = 'none';
+            }, 5000);
+        }
+    </script>
 </body>
 </html>
   `;
 }
 
-// Function to generate Google Form HTML
-function generateGoogleFormHTML() {
-  return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cow Not Found - Add New Cow</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
-            text-align: center;
-        }
-        .header {
-            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
-            color: white;
-            padding: 40px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2.5em;
-            font-weight: 300;
-        }
-        .content {
-            padding: 40px;
-        }
-        .message {
-            font-size: 1.2em;
-            color: #666;
-            margin-bottom: 30px;
-            line-height: 1.6;
-        }
-        .form-button {
-            display: inline-block;
-            background: linear-gradient(45deg, #4CAF50, #45a049);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 25px;
-            font-size: 1.1em;
-            font-weight: bold;
-            transition: transform 0.3s ease;
-        }
-        .form-button:hover {
-            transform: translateY(-2px);
-        }
-        .icon {
-            font-size: 4em;
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="icon">🐄❓</div>
-            <h1>Cow Not Found</h1>
-        </div>
-        <div class="content">
-            <p class="message">
-                The cow ID you're looking for doesn't exist in our database. 
-                Would you like to register a new cow? Click the button below to fill out our registration form.
-            </p>
-            <a href="${GOOGLE_FORM_URL}" target="_blank" class="form-button">
-                📝 Register New Cow
-            </a>
-            
-        </div>
-    </div>
-</body>
-</html>
-  `;
-}
 
 
 // Main endpoint to get cow information by ID
@@ -651,16 +789,16 @@ app.get('/cow/:id', authenticateVet, authorizeCowRegion, async (req, res) => {
     if (!cow) {
       const data = await Cow.find({ cowId: cowId });
       cow = data[0];
-    }
-
-    if (cow) {
+    }    if (cow) {
       // Return cow information as HTML
       const html = generateCowHTML(cow);
       res.send(html);
     } else {
-      // Return Google Form HTML
-      const html = generateGoogleFormHTML();
-      res.send(html);
+      // Return Cow Registration HTML with the requested cow ID
+      // const html = generateCowRegistrationHTML(cowId);
+      // res.send(html);
+      return res.redirect(`/cow-registration.html?cowId=${encodeURIComponent(cowId)}`);
+
     }
   } catch (error) {
     console.error('Error fetching cow:', error);
@@ -692,12 +830,11 @@ app.get('/api/cow/:id', authenticateVet, authorizeCowRegion, async (req, res) =>
     }
 
     if (cow) {
-      res.json({ success: true, cow });
-    } else {
+      res.json({ success: true, cow });    } else {
       res.status(404).json({
         success: false,
         message: 'Cow not found',
-        googleFormUrl: GOOGLE_FORM_URL
+        registrationUrl: `/cow/${cowId}`
       });
     }
   } catch (error) {
@@ -734,6 +871,98 @@ app.post('/api/cow', authenticateVet, async (req, res) => {
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Add vaccination to a cow
+app.post('/api/cow/:id/vaccination', authenticateVet, authorizeCowRegion, async (req, res) => {
+  try {
+    const cowId = req.params.id;
+    const { name, date, nextDue } = req.body;
+
+    // Validate required fields
+    if (!name || !date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vaccination name and date are required'
+      });
+    }
+
+    // Use cow from middleware if available, otherwise find it
+    let cow = req.cow;
+    if (!cow) {
+      cow = await Cow.findOne({ cowId: cowId });
+    }
+
+    if (!cow) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cow not found'
+      });
+    }
+
+    // Create vaccination record
+    const vaccination = {
+      name,
+      date: new Date(date),
+      nextDue: nextDue ? new Date(nextDue) : null
+    };
+
+    // Add vaccination to cow's vaccination array
+    cow.vaccinations.push(vaccination);
+    await cow.save();
+
+    res.json({
+      success: true,
+      message: 'Vaccination added successfully',
+      vaccination,
+      cow: {
+        cowId: cow.cowId,
+        name: cow.name,
+        vaccinations: cow.vaccinations
+      }
+    });
+
+  } catch (error) {
+    console.error('Error adding vaccination:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to add vaccination'
+    });
+  }
+});
+
+// Get cow vaccinations
+app.get('/api/cow/:id/vaccinations', authenticateVet, authorizeCowRegion, async (req, res) => {
+  try {
+    const cowId = req.params.id;
+
+    // Use cow from middleware if available, otherwise find it
+    let cow = req.cow;
+    if (!cow) {
+      cow = await Cow.findOne({ cowId: cowId });
+    }
+
+    if (!cow) {
+      return res.status(404).json({
+        success: false,
+        message: 'Cow not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      cowId: cow.cowId,
+      cowName: cow.name,
+      vaccinations: cow.vaccinations || []
+    });
+
+  } catch (error) {
+    console.error('Error fetching vaccinations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch vaccinations'
+    });
+  }
 });
 
 // Dashboard Metrics Endpoints
@@ -953,6 +1182,11 @@ app.get('/api/dashboard/cows', authenticateVet, async (req, res) => {
     console.error('Error fetching cows list:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch cows list' });
   }
+});
+
+// Direct route for cow registration page
+app.get('/cow-registration', authenticateVet, (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/cow-registration.html'));
 });
 
 // Logout endpoint
